@@ -1,0 +1,155 @@
+# Variables V1
+
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+variables = inner_join(mpi_index, geo_variables, by = "hhid") %>%
+  left_join(micro_variables, by = "hhid") %>%
+  select(hhid, "Multidimensionally poor", "Nearest major city", "Distance in km", "5km_protected_exposure", "10km_protected_exposure", "15km_protected_exposure", "hsize", "sex", "head_age", "marital_status", "children", "working_rate")
+
+uganda_mpi_dataset_v2 <- Uganda_MPI_Dataset_V1 %>%
+  left_join(HFI_2016_Data_Copy %>% select(hhid, hfi_2016), by = "hhid") %>%
+  left_join(Topographical_Variables_Copy %>% select(hhid, elevation_km, slope_o), by="hhid") %>%
+  left_join(Tourism_Exposue %>% select(hhid, NUMPOINTS), by = "hhid") %>%
+  rename(tourism_exposure = NUMPOINTS)
+
+library(haven)
+write_dta(uganda_mpi_dataset_v2, "uganda_mpi_dataset_v2")
+
+hh_region = pov2015_16 %>%
+  select(hh, region) %>%
+  mutate(hh = str_remove(hh, "-05-")) %>%
+  rename(hhid = hh)
+
+uganda_mpi_dataset_v3 = uganda_mpi_dataset_v2 %>%
+  left_join(hh_region, by="hhid")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v3, "uganda_mpi_dataset_v3")
+
+
+# Variables V2
+
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+uganda_mpi_dataset_v4 = inner_join(mpi_index, geo_variables, by = "hhid") %>%
+  left_join(micro_variables_v2, by = "hhid") %>%
+  select(hhid, "Multidimensionally poor", "Nearest major city", "Distance in km", "5km_protected_exposure", "10km_protected_exposure", "15km_protected_exposure", "hsize", "sex", "head_age", "marital_status", "children", "working_rate")
+
+uganda_mpi_dataset_v2 <- Uganda_MPI_Dataset_V1 %>%
+  left_join(HFI_2016_Data_Copy %>% select(hhid, hfi_2016), by = "hhid") %>%
+  left_join(Topographical_Variables_Copy %>% select(hhid, elevation_km, slope_o), by="hhid") %>%
+  left_join(Tourism_Exposue %>% select(hhid, NUMPOINTS), by = "hhid") %>%
+  rename(tourism_exposure = NUMPOINTS)
+
+library(haven)
+write_dta(uganda_mpi_dataset_v2, "uganda_mpi_dataset_v2")
+
+hh_region = pov2015_16 %>%
+  select(hh, region) %>%
+  mutate(hh = str_remove(hh, "-05-")) %>%
+  rename(hhid = hh)
+
+uganda_mpi_dataset_v3 = uganda_mpi_dataset_v2 %>%
+  left_join(hh_region, by="hhid")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v3, "uganda_mpi_dataset_v3")
+
+
+
+
+# attaching v4 to v3
+
+uganda_mpi_dataset_v4 = uganda_mpi_dataset_v3 %>%
+  select(-head_sex, -head_age, -hsize, -marital_status, -working_rate) %>%
+  left_join(micro_variables_v2 %>% select(hhid, head_sex, head_age, hsize, marital_status, working_rate), by="hhid")%>%
+  left_join(unps_geovars_2015_16 %>% select(hhid, pub_lat_mod), by="hhid") %>%
+  select(number, hhid, region, mpi_status, protected_exposure_5km, protected_exposure_10km, protected_exposure_15km, head_sex, head_age, marital_status, hsize, working_rate, distance_from_nearest_city_km, hfi_2016, elevation_km, slope_o, tourism_exposure, pub_lat_mod)
+
+write.csv(uganda_mpi_dataset_v4, "uganda_mpi_dataset_v4")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v4, "uganda_mpi_dataset_v4")
+
+
+# attaching mpi_index_v2 to v5
+
+uganda_mpi_dataset_v5 = uganda_mpi_dataset_v4 %>%
+  left_join(mpi_index_v2 %>% select(hhid, mpi_status_v2), by = "hhid") %>%
+  select(number, hhid, region, mpi_status, mpi_status_v2, protected_exposure_5km, protected_exposure_10km, protected_exposure_15km, head_sex, head_age, marital_status, hsize, working_rate, distance_from_nearest_city_km, hfi_2016, elevation_km, slope_o, tourism_exposure, pub_lat_mod)
+  
+write.csv(uganda_mpi_dataset_v5, "uganda_mpi_dataset_v5")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v5, "uganda_mpi_dataset_v5")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v6, "uganda_mpi_dataset_v6")
+
+library(haven)
+write_dta(uganda_mpi_dataset_v7, "uganda_mpi_dataset_v7")
+
+hh_urban = pov2015_16 %>%
+  select(hh, urban) %>%
+  mutate(hh = str_remove(hh, "-05-")) %>%
+  rename(hhid = hh) %>%
+  rename(urban_name = urban) %>%
+  mutate(urban = urban_name) %>%
+  mutate(urban = if_else(urban_name == "Rural", 1, 0))
+
+uganda_mpi_dataset_v8 = uganda_mpi_dataset_v7 %>%
+  left_join(hh_urban, by = "hhid") %>%
+  select(number, hhid, region, urban, mpi_status, protected_status, head_sex, head_age, marital_status, hsize, working_rate, distance_from_nearest_city_km, hfi_2016, elevation_km, slope_o, pub_lat_mod)
+
+write_dta(uganda_mpi_dataset_v8, "uganda_mpi_dataset_v8")
+write.csv(uganda_mpi_dataset_v8, "uganda_mpi_dataset_v8")
+
+uganda_mpi_dataset_v9 = uganda_mpi_dataset_v9 %>%
+  rename(outlier_distance_city_km = outlier_distance_from_nearest_city_km)
+
+write_dta(uganda_mpi_dataset_v9, "uganda_mpi_dataset_v9")
+
+
+# Variables V3
+
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+# households coordinates by mdp status
+
+hh_geovars = unps_geovars_2015_16 %>%
+  left_join(uganda_mpi_dataset_v5 %>% select(hhid, mpi_status), by = "hhid")
+
+write.csv(hh_geovars, "hh_geovars")
+
+mpi_index_v2_robustness = mpi_index_v2_robustness %>%
+  select(-`...23`, -`...24`, -`...25`)
