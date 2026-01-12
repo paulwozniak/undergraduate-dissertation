@@ -1,0 +1,17 @@
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+macro_variables = gsec1 %>%
+  select(parish_code, parish_name) %>%
+  distinct()
+
+write.csv(macro_variables, "Macro Variables")
