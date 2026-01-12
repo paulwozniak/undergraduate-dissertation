@@ -1,0 +1,64 @@
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+# Household size
+
+micro_variables = pov2015_16 %>%
+  select(hh, hsize) %>%
+  mutate(hh = str_remove(hh, "-05-")) %>%
+  rename(hhid = hh)
+
+
+# Head of household features
+
+hh_head = gsec2 %>%
+  select(hhid, pid, h2q3, h2q4, h2q8, h2q10) %>%
+  filter(h2q4 == "Head")
+
+micro_variables = inner_join(micro_variables, hh_head, by = "hhid")
+
+micro_variables = micro_variables %>%
+  rename(head_age = h2q8) %>%
+  rename(head_sex = h2q3) %>%
+  rename(head_marital = h2q10)
+
+# Children in household
+
+hh_children = gsec2 %>%
+  select(hhid, pid, h2q8) %>%
+  group_by(hhid) %>%
+  mutate(children = if_else(any(h2q8 < 18, na.rm = TRUE), "Yes", "No")) %>%
+  ungroup() %>%
+  select(hhid, children) %>%
+  unique()
+
+micro_variables =inner_join(micro_variables, hh_children, by = "hhid")
+
+# Working members
+
+hh_employment = gsec8 %>%
+  select(hhid, pid, h8q4) %>%
+  left_join(gsec2 %>% select(hhid, pid, h2q8), by = c("hhid", "pid")) %>%
+  filter(h2q8 >= 18 & h2q8 <= 60) %>%  # Keep only those aged 18 to 60
+  group_by(hhid) %>%
+  summarize(
+    total_working_age_members = n(),
+    total_employed_working_age_members = sum(h8q4 == 1, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  mutate(working_rate = total_employed_working_age_members / total_working_age_members)
+
+micro_variables = inner_join(micro_variables, hh_employment, by = "hhid")
+
+write.csv(micro_variables,"Micro Variables")
+
+micro_variables = Micro_Variables
