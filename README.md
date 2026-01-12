@@ -1,5 +1,5 @@
 # undergraduate-dissertation
-Code and access to datasets used for my final year dissertation as part of my undergraduate degree at University of Bath studying BSc (Hons) International Development with Economics.
+Code and access to datasets used for my final year dissertation as part of my undergraduate degree at University of Bath studying BSc (Hons) International Development with Economics. This dissertation was awarded a First-Class.
 
 ## Project Overview
 This project examines whether household proximity to environmentally protected areas is associated with multidimensional poverty outcomes, explored through the case study of Uganda. I answer this question using an original logistic regression model, which controls for household and spatial characteristics.
