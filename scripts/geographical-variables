@@ -1,0 +1,44 @@
+install.packages("tidyverse")
+library(ggplot2)	# for graphs
+library(dplyr)		# for collapsing/merging data easily
+library(gridExtra)	# arranging graphs
+library(WDI)		# downloading world bank data
+library(ggpubr)		# arranging graphs
+library(countrycode)	# merging on iso codes
+library(tidyr)		# some tidy up functions
+library(data.table)	# much faster than base r
+library(openxlsx) # flexible for reading/writing excel files
+library(stringr)
+
+# Distance to nearest major city
+
+geo_variables = gsec1 %>%
+  select(hhid, district, district_name, scounty_code, subcounty_name, parish_code, parish_name, h1aq6, village_name)
+
+HH_distance_to_major_city = HH_distance_to_major_city %>%
+  distinct()
+
+geo_variables = inner_join(geo_variables, HH_distance_to_major_city, by="hhid") %>%
+  select(-fid)
+
+# Protected area exposure
+
+hh_protected_exposure = full_join(Protected_Surface_Area_5km_Clean, Protected_Surface_Area_10km_Clean, by=c("fid", "hhid"))
+
+hh_protected_exposure = full_join(hh_protected_exposure, Protected_Surface_Area_15km_Clean, by=c("fid", "hhid"))
+
+geo_variables = full_join(geo_variables, hh_protected_exposure, by="hhid") %>%
+  mutate(across(
+    c(
+      `5km_radius_protected_surface_area_m2`,
+      `5km_radius_surface_area_m2`,
+      `5km_protected_exposure`,
+      `10km_radius_protected_surface_area_m2`,
+      `10km_radius_surface_area_m2`,
+      `10km_protected_exposure`,
+      `15km_radius_protected_surface_area_m2`,
+      `15km_radius_surface_area_m2`,
+      `15km_protected_exposure`
+    ),
+    ~ replace_na(.x, 0)
+  ))
